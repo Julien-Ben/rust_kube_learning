@@ -1,26 +1,20 @@
-use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
+mod api;
+mod models;
+mod repository;
 
-#[get("/")]
-async fn hello() -> impl Responder {
-    HttpResponse::Ok().body("Hello world!")
-}
-
-#[post("/echo")]
-async fn echo(req_body: String) -> impl Responder {
-    HttpResponse::Ok().body(req_body)
-}
-
-async fn manual_hello() -> impl Responder {
-    HttpResponse::Ok().body("Hey there!")
-}
+//modify imports below
+use actix_web::{web::Data, App, HttpServer};
+use api::user_api::{create_user};
+use repository::mongodb_repo::MongoRepo;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| {
+    let db = MongoRepo::init().await;
+    let db_data = Data::new(db);
+    HttpServer::new(move || {
         App::new()
-            .service(hello)
-            .service(echo)
-            .route("/hey", web::get().to(manual_hello))
+            .app_data(db_data.clone())
+            .service(create_user)
     })
         .bind(("127.0.0.1", 8080))?
         .run()
