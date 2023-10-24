@@ -22,20 +22,21 @@ struct UploadForm {
 async fn process_image(
     db: Data<MongoRepo>,
     user_id: String,
-    MultipartForm(form): MultipartForm<UploadForm>,
+    MultipartForm(mut form): MultipartForm<UploadForm>,
 ) -> HttpResponse {
 
     /*
-    User sends image and user_id
-    Save base image on file system
-    Insert base image data in DB
+        User sends image and user_id
+        Save base image on file system
+        Insert base image data in DB
     */
     if form.files.len() != 1 {
-       return HttpResponse::BadRequest().body("Only one file must be sent")
+       return HttpResponse::BadRequest().body("Exactly one file must be sent")
     }
-    let f = form.files.get(0).unwrap();
-    save_image(f);
+    let f = form.files.pop().unwrap();
     let filename = f.file_name.clone().unwrap();
+    save_image(f);
+
     let fullpath = IMAGE_PATH.to_owned() + &filename;
     let new_image = Image {
         id: None,
@@ -86,7 +87,7 @@ async fn process_image(
     HttpResponse::Ok().body(format!("Image correctly saved with IDs {} and {}", base_image_id, processed_image_id))
 }
 
-fn save_image(f: &TempFile) {
+fn save_image(f: TempFile) {
     fs::create_dir_all(IMAGE_PATH).expect("Impossible to create directory");
     let path = IMAGE_PATH.to_owned() + &f.file_name.clone().unwrap();
     println!("{}", path);
