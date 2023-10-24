@@ -11,8 +11,6 @@ pub async fn create_user(db: Data<MongoRepo>, new_user: Json<User>) -> HttpRespo
     let data = User {
         id: None,
         name: new_user.name.to_owned(),
-        location: new_user.location.to_owned(),
-        title: new_user.title.to_owned(),
     };
     let user_detail = db.create_user(data).await;
     match user_detail {
@@ -47,8 +45,6 @@ pub async fn update_user(
     let data = User {
         id: Some(ObjectId::parse_str(&id).unwrap()),
         name: new_user.name.to_owned(),
-        location: new_user.location.to_owned(),
-        title: new_user.title.to_owned(),
     };
     let update_result = db.update_user(&id, data).await;
     match update_result {
