@@ -1,5 +1,4 @@
 use std::env;
-use std::str::FromStr;
 
 extern crate dotenv;
 use dotenv::dotenv;
