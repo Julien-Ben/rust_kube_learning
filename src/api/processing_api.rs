@@ -13,13 +13,13 @@ use image;
 const IMAGE_PATH: &str = "./tmp/images/";
 
 #[derive(Debug, MultipartForm)]
-struct UploadForm {
+pub struct UploadForm {
     #[multipart(rename = "file")]
     files: Vec<TempFile>,
 }
 
 #[post("/process_image")]
-async fn process_image(
+pub async fn process_image(
     db: Data<MongoRepo>,
     user_id: String,
     MultipartForm(mut form): MultipartForm<UploadForm>,
@@ -31,14 +31,15 @@ async fn process_image(
 
     // Save base image on file system
     let f = form.files.pop().unwrap();
-    let filename = f.file_name.clone().unwrap();
+    let filename = f.file_name.clone().unwrap_or(String::from("default_file_name"));
     save_image(f);
 
     // Insert base image data in DB
     let fullpath = IMAGE_PATH.to_owned() + &filename;
+    let user_object_id = ObjectId::from_str(&user_id).expect("User id should be parsed correctly");
     let new_image = Image {
         id: None,
-        user: ObjectId::from_str(&user_id).expect("User id should be parsed correctly"),
+        user: user_object_id.clone(),
         timestamp: DateTime::now(),
         uri: fullpath.clone(),
         filename: filename.clone(),
@@ -76,9 +77,14 @@ async fn process_image(
     let processed_image_id = result_image_creation.inserted_id;
 
     // Save processing data in DB (images ID, user id, timestamp)
-    // TODO : Do it ?
-    let processing_document = Processing {}
-    let result_image_creation = match db.create_processing(processed_image_document).await {
+    let processing_document = Processing {
+        id: None,
+        timestamp: DateTime::now(),
+        base_image: base_image_id.as_object_id().expect("Object should have an id"),
+        processed_image: processed_image_id.as_object_id().expect("Object should have an id"),
+        user: user_object_id,
+    };
+    let result_image_creation = match db.create_processing(processing_document).await {
         Ok(r) => r,
         Err(err) => return HttpResponse::InternalServerError().body(err.to_string()),
     };
@@ -91,6 +97,5 @@ async fn process_image(
 fn save_image(f: TempFile) {
     fs::create_dir_all(IMAGE_PATH).expect("Impossible to create directory");
     let path = IMAGE_PATH.to_owned() + &f.file_name.clone().unwrap();
-    println!("{}", path);
     f.file.persist(path).unwrap();
 }

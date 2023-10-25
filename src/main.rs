@@ -2,12 +2,10 @@ mod api;
 mod models;
 mod repository;
 
-use std::any::Any;
 //modify imports below
 use actix_web::{web::Data, App, HttpServer, web};
-use actix_web::dev::HttpServiceFactory;
 use api::user_api::{create_user, get_user, update_user, delete_user, get_all_users};
-use api::processing_api::{process_image};
+use api::processing_api::process_image;
 use repository::mongodb_repo::MongoRepo;
 
 #[actix_web::main]
