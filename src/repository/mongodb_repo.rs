@@ -33,11 +33,7 @@ impl MongoRepo {
         let user_col: Collection<User> = db.collection("User");
         let processing_col: Collection<Processing> = db.collection("Procesing");
         let image_col: Collection<Image> = db.collection("Image");
-        MongoRepo {
-            user_col: user_col,
-            processing_col: processing_col,
-            image_col: image_col
-        }
+        MongoRepo {user_col, processing_col, image_col}
     }
 
     pub async fn create_user(&self, new_user: User) -> Result<InsertOneResult, Error> {
