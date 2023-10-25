@@ -1,0 +1,8 @@
+.github
+.idea
+vendor/
+scripts/
+.git/
+bin/
+testbin/
+target/
