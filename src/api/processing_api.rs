@@ -2,6 +2,7 @@ use std::fs;
 use std::str::FromStr;
 use actix_multipart::form::MultipartForm;
 use actix_multipart::form::tempfile::TempFile;
+use actix_multipart::form::text::Text;
 use actix_web::{post, HttpResponse};
 use actix_web::web::Data;
 use mongodb::bson::DateTime;
@@ -16,18 +17,20 @@ const IMAGE_PATH: &str = "./tmp/images/";
 pub struct UploadForm {
     #[multipart(rename = "file")]
     files: Vec<TempFile>,
+    user_id: Text<String>,
 }
 
 #[post("/process_image")]
 pub async fn process_image(
     db: Data<MongoRepo>,
-    user_id: String,
     MultipartForm(mut form): MultipartForm<UploadForm>,
 ) -> HttpResponse {
     // User sends image and user_id
     if form.files.len() != 1 {
        return HttpResponse::BadRequest().body("Exactly one file must be sent")
     }
+
+    let user_id = form.user_id;
 
     // Save base image on file system
     let f = form.files.pop().unwrap();
