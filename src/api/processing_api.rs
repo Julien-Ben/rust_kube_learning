@@ -61,9 +61,9 @@ pub async fn process_image(
     };
 
     let gray_image = image::imageops::rotate180(&img);
-    let processed_path = fullpath.clone() + "_processed.jpg"; // TODO : remove previous ".jpg"
-    gray_image.save(processed_path).expect("Impossible to save processed image"); // TODO : good
-                                                                                  // practice
+    let processed_path = fullpath.rsplit_once(".").map(|(a, _)| a.to_string() + "_processed.jpg")
+        .expect("Fullpath should have an extension");
+    gray_image.save(processed_path).expect("Impossible to save processed image");
     // Insert processed image data in DB
     let processed_image_document = Image {
         id: None,
