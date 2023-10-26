@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rust-api-deployment
+  namespace: rust-server
+  labels:
+    app: rust-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: rust-api
+  template:
+    metadata:
+      labels:
+        app: rust-api
+    spec:
+      containers:
+        - name: rust-api-container
+          image: #fill before use
+          ports:
+            - containerPort: 8080
+          env:
+            - name: MONGOURI
+              value: #fill before use
+      imagePullSecrets:
+        - name: image-registries-secret
