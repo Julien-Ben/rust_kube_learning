@@ -17,11 +17,21 @@ spec:
     spec:
       containers:
         - name: rust-api-container
-          image: #fill before use
+          image: julienben/rust-learning:latest
           ports:
             - containerPort: 8080
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1024Mi"
+              cpu: "500m"
           env:
             - name: MONGOURI
-              value: #fill before use
+              valueFrom:
+                secretKeyRef:
+                  name: mongouri-secret
+                  key: MONGOURI
       imagePullSecrets:
         - name: image-registries-secret
