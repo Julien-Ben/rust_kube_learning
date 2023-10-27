@@ -1,6 +1,6 @@
 use mongodb::bson::oid::ObjectId;
 use mongodb::bson::DateTime;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Image {

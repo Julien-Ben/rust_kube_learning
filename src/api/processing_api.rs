@@ -1,15 +1,15 @@
-use std::fs;
-use std::str::FromStr;
-use actix_multipart::form::MultipartForm;
+use crate::models::{image_model::Image, processing_model::Processing};
+use crate::repository::mongodb_repo::MongoRepo;
 use actix_multipart::form::tempfile::TempFile;
 use actix_multipart::form::text::Text;
-use actix_web::{post, HttpResponse};
+use actix_multipart::form::MultipartForm;
 use actix_web::web::Data;
-use mongodb::bson::DateTime;
-use mongodb::bson::oid::ObjectId;
-use crate::models::{processing_model::Processing, image_model::Image};
-use crate::repository::mongodb_repo::MongoRepo;
+use actix_web::{post, HttpResponse};
 use image;
+use mongodb::bson::oid::ObjectId;
+use mongodb::bson::DateTime;
+use std::fs;
+use std::str::FromStr;
 
 const IMAGE_PATH: &str = "./tmp/images/";
 
@@ -27,14 +27,17 @@ pub async fn process_image(
 ) -> HttpResponse {
     // User sends image and user_id
     if form.files.len() != 1 {
-       return HttpResponse::BadRequest().body("Exactly one file must be sent")
+        return HttpResponse::BadRequest().body("Exactly one file must be sent");
     }
 
     let user_id = form.user_id;
 
     // Save base image on file system
     let f = form.files.pop().unwrap();
-    let filename = f.file_name.clone().unwrap_or(String::from("default_file_name"));
+    let filename = f
+        .file_name
+        .clone()
+        .unwrap_or(String::from("default_file_name"));
     save_image(f);
 
     // Insert base image data in DB
@@ -42,7 +45,7 @@ pub async fn process_image(
     let user_object_id = ObjectId::from_str(&user_id).expect("User id should be parsed correctly");
     let new_image = Image {
         id: None,
-        user: user_object_id.clone(),
+        user: user_object_id,
         timestamp: DateTime::now(),
         uri: fullpath.clone(),
         filename: filename.clone(),
@@ -61,9 +64,13 @@ pub async fn process_image(
     };
 
     let gray_image = image::imageops::rotate180(&img);
-    let processed_path = fullpath.rsplit_once(".").map(|(a, _)| a.to_string() + "_processed.jpg")
+    let processed_path = fullpath
+        .rsplit_once('.')
+        .map(|(a, _)| a.to_string() + "_processed.jpg")
         .expect("Fullpath should have an extension");
-    gray_image.save(processed_path).expect("Impossible to save processed image");
+    gray_image
+        .save(processed_path)
+        .expect("Impossible to save processed image");
     // Insert processed image data in DB
     let processed_image_document = Image {
         id: None,
@@ -83,8 +90,12 @@ pub async fn process_image(
     let processing_document = Processing {
         id: None,
         timestamp: DateTime::now(),
-        base_image: base_image_id.as_object_id().expect("Object should have an id"),
-        processed_image: processed_image_id.as_object_id().expect("Object should have an id"),
+        base_image: base_image_id
+            .as_object_id()
+            .expect("Object should have an id"),
+        processed_image: processed_image_id
+            .as_object_id()
+            .expect("Object should have an id"),
         user: user_object_id,
     };
     let result_image_creation = match db.create_processing(processing_document).await {
@@ -94,7 +105,10 @@ pub async fn process_image(
     let processed_image_id = result_image_creation.inserted_id;
 
     // Return processed image ID or link
-    HttpResponse::Ok().body(format!("Image correctly saved with IDs {} and {}", base_image_id, processed_image_id))
+    HttpResponse::Ok().body(format!(
+        "Image correctly saved with IDs {} and {}",
+        base_image_id, processed_image_id
+    ))
 }
 
 fn save_image(f: TempFile) {
